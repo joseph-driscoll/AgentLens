@@ -1,7 +1,5 @@
 # AgentLens - Architecture Guide
 
----
-
 ## How the app works in one paragraph
 
 The user pastes a LangSmith API key into Settings. From that point on, every page fetches live data from the LangSmith REST API via a Vite dev proxy (required because LangSmith blocks direct browser requests). A local LangGraph server running at `localhost:2024` powers the Chat page - the user sends a message, the agent runs, and the response is streamed back. After each chat reply, a second call to OpenAI scores the response (helpfulness / correctness / relevance) and posts the scores back to LangSmith as feedback. Those scores then show up on the Evaluations page. The Datasets page lets the user save any trace as a labeled example and run whole datasets through the agent in one click.
