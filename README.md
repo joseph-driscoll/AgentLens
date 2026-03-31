@@ -1,4 +1,4 @@
-﻿# AgentLens
+# AgentLens
 
 A real-time LLM observability dashboard built on top of the LangSmith API and LangGraph - designed to demonstrate hands-on experience with the full LangChain ecosystem.
 
@@ -12,7 +12,7 @@ Connect your LangSmith workspace and a local LangGraph agent to get live traces,
 
 Live KPI cards (traces, avg latency, total cost, avg eval score, error rate) sourced from LangSmith session stats. Trace volume time-series, latency distribution, cost-by-model, and evaluation score radar chart update as your agent runs.
 
-Dashboard
+![Dashboard](docs/screenshots/dashboard.png)
 
 ---
 
@@ -20,7 +20,7 @@ Dashboard
 
 Talk to your local LangGraph agent without leaving the dashboard. Every reply shows latency, token counts, cost, and a "View trace" link. After each message, GPT-4o-mini silently scores the response on helpfulness, correctness, and relevance - scores appear inline and are logged to LangSmith as structured feedback.
 
-Chat
+![Chat](docs/screenshots/chat.png)
 
 ---
 
@@ -28,7 +28,7 @@ Chat
 
 Every agent invocation captured with input query, final answer, and a full expandable span tree (chain → LLM call → tool calls). Search by query text, trace ID, or tag. Click "Add to Dataset" on any trace to save that input/output pair as a labeled example for regression testing.
 
-Traces
+![Traces](docs/screenshots/traces.png)
 
 ---
 
@@ -36,7 +36,7 @@ Traces
 
 Per-run LLM-judge scores with source badges (LLM Judge vs Experiment), a 7-day score trend, and a sortable/filterable table. Filter by evaluator dimension or sort by score to surface underperforming runs instantly.
 
-Evaluations
+![Evaluations](docs/screenshots/evaluations.png)
 
 ---
 
@@ -44,7 +44,7 @@ Evaluations
 
 Browse LangSmith datasets, view examples, and run full experiments directly in the app. The experiment runner sends each example through your agent, calls GPT-4o-mini for scoring, logs feedback to LangSmith, and shows live per-example progress with aggregate scores.
 
-Datasets & Experiments
+![Datasets and Experiments](docs/screenshots/datasets.png)
 
 ---
 
@@ -52,7 +52,7 @@ Datasets & Experiments
 
 Paste your LangSmith and OpenAI API keys to go live - keys are stored in `localStorage` and never leave your browser. Includes a Danger Zone for clearing evaluations, traces, or the entire project when you want a clean slate.
 
-Settings
+![Settings](docs/screenshots/settings.png)
 
 ---
 
