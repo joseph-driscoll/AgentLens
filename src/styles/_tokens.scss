@@ -1,0 +1,58 @@
+// Design tokens for AgentLens
+// These mirror the Tailwind slate/emerald palette and are used for
+// anything that needs values outside of utility classes (e.g. JS-driven
+// styles, custom scrollbars, third-party overrides).
+
+// ---- Color palette ----------------------------------------------------------
+
+// Background layers (darkest to lightest)
+$color-bg-base:      #020617; // slate-950 - page background
+$color-bg-surface:   #0f172a; // slate-900 - cards, modals, tooltips
+$color-bg-elevated:  #1e293b; // slate-800 - hover states, inputs
+$color-bg-border:    #334155; // slate-700 - visible borders
+
+// Text hierarchy
+$color-text-primary:   #f1f5f9; // slate-100
+$color-text-secondary: #94a3b8; // slate-400
+$color-text-muted:     #64748b; // slate-500
+$color-text-faint:     #334155; // slate-700
+
+// Brand / accent (emerald green - live data, success states)
+$color-brand-400: oklch(0.75 0.16 160);
+$color-brand-500: oklch(0.65 0.18 160);
+$color-brand-600: oklch(0.55 0.16 160);
+
+// Status colors
+$color-success: #34d399; // emerald-400
+$color-warning: #fbbf24; // amber-400
+$color-error:   #f87171; // red-400
+$color-info:    #818cf8; // indigo-400
+
+// Evaluation score colors
+$color-score-good: #34d399; // >= 80%
+$color-score-mid:  #fbbf24; // >= 50%
+$color-score-bad:  #f87171; // < 50%
+
+// ---- Typography -------------------------------------------------------------
+
+$font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+$font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+// ---- Spacing & radii --------------------------------------------------------
+
+$radius-sm: 6px;
+$radius-md: 8px;
+$radius-lg: 12px;
+$radius-xl: 16px;
+
+// ---- Shadows ----------------------------------------------------------------
+
+$shadow-tooltip: 0 4px 20px rgba(0, 0, 0, 0.5);
+$shadow-card:    0 1px 3px rgba(0, 0, 0, 0.3);
+$shadow-modal:   0 8px 32px rgba(0, 0, 0, 0.6);
+
+// ---- Z-index layers ---------------------------------------------------------
+
+$z-dropdown: 9999;  // floating dropdowns (Add to Dataset picker)
+$z-sidebar:  50;    // mobile sidebar drawer
+$z-toast:    100;   // sonner toasts

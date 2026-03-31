@@ -1,0 +1,47 @@
+@use "tokens" as t;
+
+// Custom component styles that cannot be expressed purely as Tailwind utility
+// classes - typically because they involve pseudo-selectors, complex nesting,
+// or need to override third-party library defaults.
+
+// ---- Scrollbar --------------------------------------------------------------
+// Applied globally. Tailwind doesn't ship scrollbar utilities by default.
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: t.$color-bg-border;
+  border-radius: 3px;
+
+  &:hover {
+    background: t.$color-text-muted;
+  }
+}
+
+// ---- Tour toast overrides ---------------------------------------------------
+// Sonner renders toasts in a portal outside the React tree, so these styles
+// can't be applied via Tailwind classes on a React component.
+// .agentlens-tour-toast is set as the className on every tour toast in useTutorial.ts.
+
+.agentlens-tour-toast {
+  min-width: 360px !important;
+}
+
+// ---- Base typography --------------------------------------------------------
+
+body {
+  font-family: t.$font-sans;
+}
+
+code,
+pre,
+.font-mono {
+  font-family: t.$font-mono;
+}

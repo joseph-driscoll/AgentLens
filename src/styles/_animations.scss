@@ -1,0 +1,50 @@
+// Keyframe animations used across the app.
+// Referenced in Tailwind via animate-[name] or directly in component CSS.
+
+// ---- Cursor blink -----------------------------------------------------------
+// Used by the chat streaming cursor: the blinking bar at the end of an
+// in-progress AI response.
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+// ---- Pulse dot --------------------------------------------------------------
+// Used by the "Live - LangSmith" badge on Traces and Evaluations pages.
+// Tailwind's built-in animate-pulse covers most cases; this is a sharper
+// version for small indicator dots.
+
+@keyframes pulse-dot {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.85);
+  }
+}
+
+// ---- Fade in up -------------------------------------------------------------
+// Subtle entrance for cards and panels when they first mount.
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ---- Spin -------------------------------------------------------------------
+// Used on loader icons (Loader2 from lucide-react).
+// Tailwind's animate-spin does the same thing; this exists for completeness.
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
