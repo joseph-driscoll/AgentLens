@@ -1,7 +1,5 @@
 # AgentLens - Architecture Guide
 
-Everything you need to know to understand, change, or explain any part of the codebase.
-
 ---
 
 ## How the app works in one paragraph
