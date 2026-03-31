@@ -78,7 +78,7 @@ export function LoginPage() {
         </p>
 
         <p className="mt-3 text-center text-xs text-slate-600">
-          JWT-authenticated · React + TypeScript + Vite
+          React + TypeScript + LangSmith
         </p>
       </div>
     </div>

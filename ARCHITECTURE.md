@@ -178,12 +178,11 @@ All charts use Recharts. Each is a thin wrapper that takes typed data props and 
 
 ---
 
-### Agent code
+### Agent
 
 | Directory | What it does |
 |---|---|
 | `langgraph-agent/` | TypeScript LangGraph ReAct agent. Five tools: `get_weather` (wttr.in API), `web_search` (DuckDuckGo), `calculate` (safe math eval), `get_datetime` (timezone lookup), `knowledge_base` (curated LangChain/AI FAQ). Served by `langgraph-cli` at `localhost:2024`. |
-| `agent/` | Python LangChain ReAct agent. Runs 12 preset questions, logs traces and LLM-judge feedback to LangSmith. Used to seed the dashboard with data quickly. |
 
 ---
 

@@ -1,11 +1,12 @@
-﻿import type { Trace, EvalResult, DashboardMetrics } from '../types';
+import type { Trace, EvalResult, DashboardMetrics } from '../types';
 
 const NOW = Date.now();
 const HOUR = 3_600_000;
 const DAY = 86_400_000;
 
+let _counter = 0;
 function id(): string {
-  return Math.random().toString(36).slice(2, 10);
+  return `span_${String(++_counter).padStart(4, '0')}`;
 }
 
 export const traces: Trace[] = [
@@ -288,24 +289,21 @@ export const evalResults: EvalResult[] = traces.flatMap((trace) => {
 });
 
 function buildTimeSeries(): DashboardMetrics['tracesByDay'] {
-  const days = 7;
-  const points = [];
-  for (let i = days - 1; i >= 0; i--) {
-    const date = new Date(NOW - i * DAY);
+  const counts = [45, 62, 78, 51, 90, 73, 55];
+  const errorCounts = [2, 4, 3, 1, 6, 2, 3];
+  return counts.map((count, i) => {
+    const date = new Date(NOW - (6 - i) * DAY);
     const label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    const count = Math.floor(Math.random() * 80) + 40;
-    const errors = Math.floor(count * (Math.random() * 0.12));
-    points.push({ date: label, count, errors });
-  }
-  return points;
+    return { date: label, count, errors: errorCounts[i] };
+  });
 }
 
 export const dashboardMetrics: DashboardMetrics = {
-  totalTraces: 1_247,
-  avgLatencyMs: 4_820,
-  totalCost: 14.72,
-  avgEvalScore: 0.84,
-  errorRate: 0.067,
+  totalTraces: traces.length,
+  avgLatencyMs: traces.reduce((s, t) => s + t.latencyMs, 0) / traces.length,
+  totalCost: traces.reduce((s, t) => s + t.totalCost, 0),
+  avgEvalScore: evalResults.reduce((s, e) => s + e.score, 0) / evalResults.length,
+  errorRate: traces.filter((t) => t.status === 'error').length / traces.length,
   tracesByDay: buildTimeSeries(),
   latencyDistribution: [
     { bucket: '<1s', count: 180 },

@@ -1,109 +1,105 @@
 # AgentLens
 
-A real-time LLM observability dashboard built on top of the LangSmith API and LangGraph - designed to demonstrate hands-on experience with the full LangChain ecosystem.
+An observability dashboard I built to get hands-on with the LangChain ecosystem - LangSmith, LangGraph, and the patterns around evaluating LLM applications.
 
-Connect your LangSmith workspace and a local LangGraph agent to get live traces, LLM-graded evaluations, dataset management, and in-app experiment execution - all in one window.
+The app connects to a real LangSmith workspace and a local LangGraph agent. You can chat with the agent, see every trace logged in real time, run LLM-as-judge evaluations, manage datasets, and execute experiments - all from one interface.
 
----
+I built this to learn the stack end-to-end, not as a production tool. It covers the parts of LangChain I wanted to understand deeply: how traces flow through LangSmith, how feedback and evaluations work at the API level, how LangGraph structures agent execution, and what it takes to wire all of that into a responsive frontend.
 
 ## Screenshots
 
 ### Dashboard
 
-Live KPI cards (traces, avg latency, total cost, avg eval score, error rate) sourced from LangSmith session stats. Trace volume time-series, latency distribution, cost-by-model, and evaluation score radar chart update as your agent runs.
-
 ![Dashboard](docs/screenshots/dashboard.png)
 
----
+Live KPI cards and charts sourced from LangSmith session stats. Updates as the agent runs.
 
 ### Chat
 
-Talk to your local LangGraph agent without leaving the dashboard. Every reply shows latency, token counts, cost, and a "View trace" link. After each message, GPT-4o-mini silently scores the response on helpfulness, correctness, and relevance - scores appear inline and are logged to LangSmith as structured feedback.
-
 ![Chat](docs/screenshots/chat.png)
 
----
+Talk to a local LangGraph agent. Each reply shows latency, tokens, cost, and a link to its trace. GPT-4o-mini scores every response inline.
 
 ### Traces
 
-Every agent invocation captured with input query, final answer, and a full expandable span tree (chain → LLM call → tool calls). Search by query text, trace ID, or tag. Click "Add to Dataset" on any trace to save that input/output pair as a labeled example for regression testing.
-
 ![Traces](docs/screenshots/traces.png)
 
----
+Searchable trace list with expandable span trees. "Add to Dataset" saves any trace as a labeled example.
 
 ### Evaluations
 
-Per-run LLM-judge scores with source badges (LLM Judge vs Experiment), a 7-day score trend, and a sortable/filterable table. Filter by evaluator dimension or sort by score to surface underperforming runs instantly.
-
 ![Evaluations](docs/screenshots/evaluations.png)
 
----
+LLM-judge scores with source badges, 7-day trend sparklines, and sortable/filterable table.
 
-### Datasets & Experiments
-
-Browse LangSmith datasets, view examples, and run full experiments directly in the app. The experiment runner sends each example through your agent, calls GPT-4o-mini for scoring, logs feedback to LangSmith, and shows live per-example progress with aggregate scores.
+### Datasets and Experiments
 
 ![Datasets and Experiments](docs/screenshots/datasets.png)
 
----
+Browse LangSmith datasets, view examples, and run experiments that send each example through the agent and score the results.
 
 ### Settings
 
-Paste your LangSmith and OpenAI API keys to go live - keys are stored in `localStorage` and never leave your browser. Includes a Danger Zone for clearing evaluations, traces, or the entire project when you want a clean slate.
-
 ![Settings](docs/screenshots/settings.png)
+
+API key management and a danger zone for clearing data when you want a fresh start.
+
+---
+
+## What I learned building this
+
+**LangSmith's REST API is the real interface.** The SDK is convenient, but building the fetch client from scratch (`src/utils/langsmith.ts`) taught me how runs, feedback, sessions, and datasets actually relate to each other at the HTTP level. Rate limiting (429s) is real - I had to add exponential backoff and a shared TTL cache across hooks.
+
+**LangGraph's execution model is clean.** The `/runs/wait` endpoint gives you synchronous agent calls without SSE parsing. One gotcha: the `run_id` for LangSmith isn't always in the response body, so I fetch it from `/threads/{id}/runs?limit=1` afterward for feedback logging.
+
+**LLM-as-judge is surprisingly practical.** A single `gpt-4o-mini` call at `temperature: 0` returns structured JSON scores for about $0.00001 per evaluation. I use the same evaluator for both chat messages and dataset experiments.
+
+**The adapter layer matters.** LangSmith returns raw run objects in three different serialization formats depending on whether the agent used the Python SDK, LangChain JS, or plain OpenAI. `src/utils/adapters.ts` normalizes all of them into typed UI models.
 
 ---
 
 ## Running it locally
 
-You need two terminals - one for the dashboard, one for the agent. Everything else is configured in the browser.
+You need two terminals - one for the dashboard, one for the agent.
 
-### Step 1 - Start the dashboard
+### 1. Start the dashboard
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open **[http://localhost:5173](http://localhost:5173)** in your browser.
+Open [http://localhost:5173](http://localhost:5173). The app runs in demo mode with mock data until you add API keys.
 
-> **No API keys yet?** The app runs in demo mode with mock data. You can explore every page before connecting anything.
+### 2. Add API keys in Settings
 
----
+Open Settings (bottom of the left nav) and paste:
 
-### Step 2 - Add your API keys in Settings
+| Key | Where to get it |
+|-----|-----------------|
+| **LangSmith API key** | [smith.langchain.com/settings](https://smith.langchain.com/settings) |
+| **OpenAI API key** | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
 
-Open **Settings** (bottom of the left nav) and paste:
+Once the LangSmith key is saved, Dashboard, Traces, Evaluations, and Datasets switch to live data automatically.
 
+The OpenAI key enables LLM-as-judge - without it, Chat still works but no eval scores are generated.
 
-| Key                   | Where to get it                                                                 |
-| --------------------- | ------------------------------------------------------------------------------- |
-| **LangSmith API key** | [smith.langchain.com/settings](https://smith.langchain.com/settings) → API Keys |
-| **OpenAI API key**    | [platform.openai.com/api-keys](https://platform.openai.com/api-keys)            |
+### 3. Start the LangGraph agent (enables Chat)
 
-
-Once the LangSmith key is saved, the Dashboard, Traces, Evaluations, and Datasets pages switch to live data from your workspace automatically.
-
-The OpenAI key enables **LLM-as-judge**-  after every Chat message, GPT-4o-mini scores the response and logs it to LangSmith. Without it, Chat still works but no eval scores are generated.
-
----
-
-### Step 3 - Start the LangGraph agent (enables Chat)
-
-The Chat page requires a LangGraph agent running at `localhost:2024`. Open a second terminal:
+The Chat page needs a LangGraph agent at `localhost:2024`. In a second terminal:
 
 ```bash
 cd langgraph-agent
 npm install
 ```
 
-Create a `.env` file in the `langgraph-agent/` folder:
+Create `langgraph-agent/.env` (see `.env.example`):
 
 ```
-LANGSMITH_API_KEY=your_langsmith_key_here
-OPENAI_API_KEY=your_openai_key_here
+LANGSMITH_TRACING=true
+LANGSMITH_ENDPOINT=https://api.smith.langchain.com
+LANGSMITH_API_KEY=your_key_here
+OPENAI_API_KEY=your_key_here
 ```
 
 Then start the server:
@@ -112,39 +108,15 @@ Then start the server:
 npx @langchain/langgraph-cli dev
 ```
 
-When you see `Ready on http://localhost:2024`, go back to the dashboard and open **Chat** - it connects automatically.
+When you see `Ready on http://localhost:2024`, go back to the dashboard and open Chat.
 
-The agent is a `createReactAgent` graph with five tools: weather (wttr.in), web search (DuckDuckGo), calculator, date/time, and a knowledge base. Try asking it anything - every response is traced to LangSmith and shows up in the Traces page within seconds.
+The agent is a `createReactAgent` graph with five tools: weather (wttr.in), web search (DuckDuckGo), calculator, date/time, and a curated knowledge base.
 
-> **Traces, Evaluations, Datasets, and Dashboard work without this step.** Only the Chat page needs the local agent running.
+> Traces, Evaluations, Datasets, and Dashboard work without this step. Only Chat needs the local agent.
 
----
+### 4. Take the tour (optional)
 
-### Step 4 - Take the tour (optional)
-
-Click **Start Tour** in the left nav. It will automatically send three messages to your agent, then walk through every page explaining what it shows. Takes about 3 minutes.
-
----
-
-### Step 5 - Seed more data (optional)
-
-The Python agent runs 12 preset questions through a LangChain ReAct agent and logs everything to LangSmith - useful for filling out the Dashboard charts and Evaluations table quickly.
-
-```bash
-cd agent
-pip install -r requirements.txt
-```
-
-Create a `.env` file in the `agent/` folder:
-
-```
-LANGSMITH_API_KEY=your_langsmith_key_here
-OPENAI_API_KEY=your_openai_key_here
-```
-
-```bash
-python agent.py
-```
+Click **Start Tour** in the left nav. It sends three messages to the agent automatically, then walks through every page. Takes about 3 minutes.
 
 ---
 
@@ -154,55 +126,29 @@ python agent.py
 npm run test:run
 ```
 
-Tests cover the core data pipeline and UI components:
-
-```
-src/test/
-├── adapters.test.ts     extractInputStr, adaptRunToTrace, buildSpanTree, adaptFeedbackToEvalResults
-└── Pagination.test.tsx  page navigation, item range display, page-size selector
-```
+58 tests covering the data adapter pipeline and UI components.
 
 ---
 
 ## Tech stack
 
-### Frontend
+**Frontend:** React 19, TypeScript, Vite, Tailwind CSS v4, SCSS, Recharts, React Router v7, Sonner, Vitest
 
-- **React 19** + **TypeScript** - component architecture, custom hooks, context
-- **Vite** - dev server with proxy rules for LangSmith API, LangGraph server, and OpenAI
-- **Tailwind CSS v4** - utility-first styling, fully responsive (mobile → desktop)
-- **Recharts** - trace volume, latency distribution, and cost-by-model charts
-- **React Router v7** - client-side routing
-- **Sonner** - toast notifications for the guided tour and inline trace feedback
-- **Vitest + Testing Library** - unit and component tests
+**LangChain ecosystem:** LangSmith REST API (traces, feedback, sessions, datasets, experiments), LangGraph JS (`createReactAgent` + `langgraph-cli`), LangGraph SDK (threads, `/runs/wait`)
 
-### LangChain ecosystem
-
-- **LangSmith REST API** - traces, feedback, session stats, datasets, examples, experiments
-- **LangGraph JS** (`@langchain/langgraph`) - local ReAct agent served via `langgraph-cli`
-- **LangGraph SDK** - thread management, `/runs/wait` for synchronous agent calls
-- **LangChain Python** - offline agent script for seeding evaluation data
-
-### AI / Evaluation
-
-- **OpenAI GPT-4o-mini** - powers the LangGraph agent and the LLM-as-judge evaluator
-- **LLM-as-Judge pattern** - single `gpt-4o-mini` call at `temperature: 0` returns `{"helpfulness": 0.x, "correctness": 0.x, "relevance": 0.x}`, POSTed to LangSmith as structured feedback
+**Evaluation:** OpenAI GPT-4o-mini as LLM-as-judge - scores helpfulness, correctness, and relevance as structured JSON, posted to LangSmith as feedback
 
 ---
 
-## Key engineering decisions
+## How it works
 
-**LangSmith API via Vite proxy** - The LangSmith REST API rejects browser-origin requests (CORS). The Vite dev server proxies `/langsmith/*` → `https://api.smith.langchain.com/*`. For production, this would be replaced by a serverless edge function (Vercel/Cloudflare) that injects the API key server-side.
+**Vite proxy for CORS** - LangSmith rejects browser requests. The dev server proxies `/langsmith/*` to `api.smith.langchain.com`. In production this would be a serverless edge function.
 
-**Rate-limit resilience** - `langsmithRequest()` wraps every fetch with exponential backoff on HTTP 429. A 5-minute TTL cache shared across all hooks means a single `/runs` fetch is reused across page navigations.
+**Shared TTL cache** - A module-level `Map` in `useLangSmithData.ts` with 5-minute TTL. A version counter + listener pattern lets `invalidateCache()` trigger all mounted hooks to refetch simultaneously.
 
-**Cache invalidation** - A version counter + listener set pattern. `invalidateCache()` bumps `_cacheVersion` and notifies every mounted hook to refetch - so all pages update in parallel without a full reload.
+**Adapter layer** - `adapters.ts` transforms raw LangSmith run objects into typed UI models (`Trace`, `Span`, `EvalResult`). Components never see raw API shapes.
 
-**Session stats vs. run sampling** - Dashboard KPIs use `GET /api/v1/sessions/{id}` for accurate totals across all runs. Charts use a 100-run sample to stay within API limits.
-
-**LLM-as-Judge** - After every Chat message, a `gpt-4o-mini` call scores the response and POSTs three feedback entries to LangSmith. At ~$0.00001 per message it's effectively free. The experiment runner uses the same evaluator across entire datasets.
-
-**LangGraph `/runs/wait`** - Synchronous agent calls with no SSE parsing. The LangSmith `run_id` isn't in the response body, so a follow-up `GET /threads/{id}/runs?limit=1` retrieves it for feedback logging.
+**Tour orchestration** - `localStorage` queue + `CustomEvent` coordination between `useTutorial.ts` and `ChatPage.tsx`. Messages are sent sequentially, each waiting for the full response and eval score before the next fires.
 
 ---
 
@@ -210,21 +156,20 @@ src/test/
 
 ```
 src/
-├── contexts/         LangSmithContext (API keys, localStorage)
-├── hooks/            useLangSmithData · useTutorial
-├── pages/            Dashboard · Traces · Evaluations · Datasets · Chat · Settings
-├── utils/
-│   ├── langsmith.ts  Typed fetch client (retry, backoff, TTL cache)
-│   ├── langgraph.ts  LangGraph client (runAndWait, thread management)
-│   ├── evaluator.ts  LLM-as-judge (GPT-4o-mini → JSON scores)
-│   ├── adapters.ts   Raw API shapes → UI types
-│   └── format.ts     Duration, cost, number formatters
-├── components/       Layout · Charts · Pagination · UI primitives
-└── test/             Vitest unit + component tests
+  contexts/         Auth and LangSmith API key state (localStorage)
+  hooks/            useLangSmithData (cache + fetch) and useTutorial (tour)
+  pages/            Dashboard, Traces, Evaluations, Datasets, Chat, Settings
+  utils/
+    langsmith.ts    Typed fetch client with retry/backoff/TTL cache
+    langgraph.ts    LangGraph client (runAndWait, thread management)
+    evaluator.ts    LLM-as-judge (GPT-4o-mini structured JSON)
+    adapters.ts     Raw API shapes to UI types
+    format.ts       Duration, cost, number formatters
+  components/       Layout, Charts, Pagination, UI primitives
+  styles/           SCSS tokens, animations, component overrides
+  test/             Vitest unit + component tests
 
-langgraph-agent/      TypeScript LangGraph ReAct agent (5 tools)
-agent/                Python LangChain ReAct agent + batch runner
-docs/screenshots/     UI screenshots
+langgraph-agent/    TypeScript LangGraph ReAct agent (5 tools)
 ```
 
 ---
