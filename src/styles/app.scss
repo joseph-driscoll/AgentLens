@@ -1,0 +1,7 @@
+// AgentLens custom styles - processed by SASS (not Tailwind).
+// @use rules must be first in any SASS file - that's why Tailwind lives in
+// tailwind.css and is imported separately from main.tsx.
+
+@use "tokens";      // $variables - no CSS output
+@use "animations";  // @keyframe definitions
+@use "components";  // scrollbar, tour toast overrides, base typography
