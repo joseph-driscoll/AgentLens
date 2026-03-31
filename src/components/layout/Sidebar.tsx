@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, ListTree, FlaskConical, Database,
-  Settings, LogOut, Scan, Play, MessageSquare, Menu, X,
+  Settings, LogOut, Scan, MessageSquare, Menu, X,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLangSmith } from '../../contexts/LangSmithContext';
@@ -15,13 +15,7 @@ const NAV_ITEMS = [
   { to: '/chat', label: 'Chat', icon: MessageSquare },
 ];
 
-function NavContent({
-  onStartTour,
-  onClose,
-}: {
-  onStartTour?: () => void;
-  onClose?: () => void;
-}) {
+function NavContent({ onClose }: { onClose?: () => void }) {
   const { logout, user } = useAuth();
   const { isConnected, config } = useLangSmith();
 
@@ -54,16 +48,6 @@ function NavContent({
             {label}
           </NavLink>
         ))}
-
-        {onStartTour && (
-          <button
-            onClick={() => { onClose?.(); onStartTour(); }}
-            className="mt-2 flex w-full items-center gap-3 rounded-lg border border-dashed border-slate-700 px-3 py-2 text-sm font-medium text-slate-500 transition-colors hover:border-emerald-500/40 hover:bg-emerald-500/5 hover:text-emerald-400"
-          >
-            <Play className="h-4 w-4" />
-            Start Tour
-          </button>
-        )}
       </nav>
 
       <div className="border-t border-slate-800 px-3 py-3">
@@ -106,17 +90,15 @@ function NavContent({
   );
 }
 
-export function Sidebar({ onStartTour }: { onStartTour?: () => void }) {
+export function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <>
-      {/* ── Desktop sidebar (lg+) ────────────────────────────────────────── */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-slate-800 bg-slate-950 lg:flex">
-        <NavContent onStartTour={onStartTour} />
+        <NavContent />
       </aside>
 
-      {/* ── Mobile top bar ───────────────────────────────────────────────── */}
       <header className="fixed inset-x-0 top-0 z-30 flex h-14 items-center gap-3 border-b border-slate-800 bg-slate-950 px-4 lg:hidden">
         <button
           onClick={() => setMobileOpen(true)}
@@ -129,15 +111,12 @@ export function Sidebar({ onStartTour }: { onStartTour?: () => void }) {
         <span className="text-sm font-bold tracking-tight text-slate-100">AgentLens</span>
       </header>
 
-      {/* ── Mobile drawer overlay ─────────────────────────────────────────── */}
       {mobileOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
-          {/* Backdrop */}
           <div
             className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
             onClick={() => setMobileOpen(false)}
           />
-          {/* Drawer */}
           <aside className="absolute inset-y-0 left-0 w-72 border-r border-slate-800 bg-slate-950 shadow-2xl">
             <button
               onClick={() => setMobileOpen(false)}
@@ -146,7 +125,7 @@ export function Sidebar({ onStartTour }: { onStartTour?: () => void }) {
             >
               <X className="h-4 w-4" />
             </button>
-            <NavContent onStartTour={onStartTour} onClose={() => setMobileOpen(false)} />
+            <NavContent onClose={() => setMobileOpen(false)} />
           </aside>
         </div>
       )}

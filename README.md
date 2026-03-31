@@ -114,10 +114,6 @@ The agent is a `createReactAgent` graph with five tools: weather (wttr.in), web 
 
 > Traces, Evaluations, Datasets, and Dashboard work without this step. Only Chat needs the local agent.
 
-### 4. Take the tour (optional)
-
-Click **Start Tour** in the left nav. It sends three messages to the agent automatically, then walks through every page. Takes about 3 minutes.
-
 ---
 
 ## Running tests
@@ -148,8 +144,6 @@ npm run test:run
 
 **Adapter layer** - `adapters.ts` transforms raw LangSmith run objects into typed UI models (`Trace`, `Span`, `EvalResult`). Components never see raw API shapes.
 
-**Tour orchestration** - `localStorage` queue + `CustomEvent` coordination between `useTutorial.ts` and `ChatPage.tsx`. Messages are sent sequentially, each waiting for the full response and eval score before the next fires.
-
 ---
 
 ## Project structure
@@ -157,7 +151,7 @@ npm run test:run
 ```
 src/
   contexts/         Auth and LangSmith API key state (localStorage)
-  hooks/            useLangSmithData (cache + fetch) and useTutorial (tour)
+  hooks/            useLangSmithData (cache + fetch)
   pages/            Dashboard, Traces, Evaluations, Datasets, Chat, Settings
   utils/
     langsmith.ts    Typed fetch client with retry/backoff/TTL cache

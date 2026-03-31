@@ -25,15 +25,6 @@
   }
 }
 
-// ---- Tour toast overrides ---------------------------------------------------
-// Sonner renders toasts in a portal outside the React tree, so these styles
-// can't be applied via Tailwind classes on a React component.
-// .agentlens-tour-toast is set as the className on every tour toast in useTutorial.ts.
-
-.agentlens-tour-toast {
-  min-width: 360px !important;
-}
-
 // ---- Base typography --------------------------------------------------------
 
 body {

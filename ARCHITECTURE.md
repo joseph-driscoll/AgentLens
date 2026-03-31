@@ -69,7 +69,6 @@ Custom hooks encapsulate data fetching and complex stateful logic so pages stay 
 | File | What it does |
 |---|---|
 | `useLangSmithData.ts` | The data layer. Three exported hooks - `useTraces`, `useEvals`, `useDashboard` - each fetch from LangSmith, cache the result for 5 minutes, and return `{ data, loading, error, isLive }`. Also exports `invalidateCache()` which forces every mounted hook to refetch immediately (called after chat sends and settings changes). |
-| `useTutorial.ts` | The self-running tour. `startTutorial()` navigates between pages, queues three chat messages for the agent to send automatically, waits for all responses and scores, then walks through every page with timed toast notifications. Uses `localStorage` to track whether the tour has been seen. |
 
 ---
 
@@ -83,7 +82,7 @@ Each page is a single React component. React Router mounts/unmounts them as the 
 | `DashboardPage.tsx` | Fetches from `useDashboard`. Shows five KPI cards (traces, latency, cost, eval score, error rate) and four charts (trace volume, latency distribution, cost by model, eval scores radar). Falls back to mock data when not connected. |
 | `TracesPage.tsx` | Fetches from `useTraces`. Shows a searchable, paginated list of agent runs. Each row expands to show input/output and a span tree. Contains the `AddToDataset` component - a floating dropdown (uses `position: fixed` + `getBoundingClientRect` to avoid clipping) that saves a trace as a labeled example in any LangSmith dataset. |
 | `EvalsPage.tsx` | Fetches from `useEvals`. Shows summary cards with 7-day sparklines per evaluator, filter chips, and a sortable table. Each row has a source badge (LLM Judge vs Experiment). |
-| `ChatPage.tsx` | The most complex page. Connects to the LangGraph server, manages a thread, sends messages, runs a character-reveal animation on responses, then fires the LLM-as-judge evaluator and logs scores to LangSmith. Also handles the tour's auto-send queue. |
+| `ChatPage.tsx` | The most complex page. Connects to the LangGraph server, manages a thread, sends messages, runs a character-reveal animation on responses, then fires the LLM-as-judge evaluator and logs scores to LangSmith. |
 | `DatasetsPage.tsx` | Fetches LangSmith datasets. Each dataset row expands to show examples and past experiments. Contains `ExperimentRunner` - sends every example through the agent, scores each with GPT-4o-mini, and logs feedback to LangSmith with live progress. |
 | `SettingsPage.tsx` | API key management. Validates the LangSmith key against the API, saves to `localStorage`. Contains the Danger Zone - buttons to clear evaluations, clear all traces (delete + recreate the session), or delete the project entirely. |
 
@@ -112,7 +111,7 @@ Reusable UI pieces used across multiple pages.
 | File | What it does |
 |---|---|
 | `AppLayout.tsx` | The shell for every authenticated page. Renders `<Sidebar>` and an `<Outlet>` where the current page appears. |
-| `Sidebar.tsx` | Left nav on desktop, top bar + drawer on mobile. Contains the nav links, connection status dot, tour button, user info, and sign out. |
+| `Sidebar.tsx` | Left nav on desktop, top bar + drawer on mobile. Contains the nav links, connection status dot, user info, and sign out. |
 | `ProtectedRoute.tsx` | Wrapper that redirects to `/login` if the user is not authenticated. |
 
 #### Charts
@@ -203,10 +202,6 @@ All fetch calls in `langsmith.ts`, `langgraph.ts`, and `evaluator.ts` use these 
 
 The LangSmith API returns raw run objects. The adapter layer converts them into typed UI models (`Trace`, `Span`, `EvalResult`) before anything reaches a component. This means components never touch raw API shapes - if the API changes, you fix it in one place.
 
-### The tour auto-send pattern (`useTutorial.ts` + `ChatPage.tsx`)
-
-The tour stores an array of messages in `localStorage` under `agentlens_tour_queue`, then fires a `tour:start-chat` custom DOM event. `ChatPage` listens for this event and, when its agent connection is ready, picks up the queue and sends each message sequentially - waiting for the full response AND eval scores before sending the next. When all three are done it fires `tour:chat-done`, which the tour is awaiting with a 120-second timeout.
-
 ---
 
 ## State that lives in localStorage
@@ -217,6 +212,3 @@ The tour stores an array of messages in `localStorage` under `agentlens_tour_que
 | `agentlens_ls_key` | LangSmith API key |
 | `agentlens_ls_project` | LangSmith project/session ID |
 | `agentlens_openai_key` | OpenAI API key |
-| `agentlens_tour_v2` | Set to "1" when the tour has been completed |
-| `agentlens_tour_queue` | Temporary: array of messages for the tour auto-send |
-| `agentlens_tour_stage` | Temporary: which tour step is currently running |

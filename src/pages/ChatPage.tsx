@@ -206,7 +206,6 @@ function MessageBubble({ msg, onViewTrace }: { msg: ChatMsg; onViewTrace: (id: s
 
 // ── Main page ──────────────────────────────────────────────────────────────
 
-
 export function ChatPage() {
   const navigate = useNavigate();
   const { config: lsConfig, openAiKey } = useLangSmith();
@@ -220,13 +219,9 @@ export function ChatPage() {
   const [initializing, setInitializing] = useState(true);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  // Character-reveal animation: full text → shown text, revealed at ~30 chars/frame
   const revealRef = useRef<{ id: string; full: string; shown: number } | null>(null);
-  // Mirrors `streaming` state so async tour code can read it without stale closures
-  const streamingRef = useRef(false);
-  // Prevents the tour queue from running twice (event + init check race)
-  const tourRunningRef = useRef(false);
 
+  // Character-reveal animation loop
   useEffect(() => {
     let rafId: number;
     function reveal() {
@@ -248,44 +243,6 @@ export function ChatPage() {
   function viewTrace(runId: string) {
     navigate(`/traces?q=${runId}`);
   }
-
-  // ── Tour auto-send ───────────────────────────────────────────────────────
-  // The tour sets a localStorage queue of messages and fires 'tour:start-chat'.
-  // We listen for that event (or check on mount) and send them sequentially.
-  // Use a ref so init() can call this without a circular useCallback dependency.
-
-  const runTourQueueRef = useRef<((aId: string, tId: string) => Promise<void>) | undefined>(undefined);
-
-  const runTourQueue = useCallback(async (aId: string, tId: string) => {
-    // Guard: only one execution at a time (event + init-check race condition)
-    if (tourRunningRef.current) return;
-    const raw = localStorage.getItem('agentlens_tour_queue');
-    if (!raw) return;
-    let queue: string[];
-    try { queue = JSON.parse(raw) as string[]; } catch { return; }
-    if (!queue.length) return;
-
-    tourRunningRef.current = true;
-    localStorage.removeItem('agentlens_tour_queue');
-
-    for (const msg of queue) {
-      // Wait until any previous send is fully done (streaming + judge)
-      await new Promise<void>((resolve) => {
-        const check = () => streamingRef.current ? setTimeout(check, 200) : resolve();
-        check();
-      });
-      // Brief readable pause between messages
-      await new Promise<void>((r) => setTimeout(r, 1200));
-      // sendMessage now awaits the full cycle including LLM-judge
-      await sendMessage(msg, aId, tId);
-    }
-
-    tourRunningRef.current = false;
-    window.dispatchEvent(new CustomEvent('tour:chat-done'));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Keep ref in sync so init() can call it safely before it's "initialized"
-  runTourQueueRef.current = runTourQueue;
 
   // ── Init: find assistant + create thread ────────────────────────────────
 
@@ -310,11 +267,6 @@ export function ChatPage() {
     setThreadId(thread.thread_id);
     setGraphId(assistant.graph_id ?? 'agent');
     setInitializing(false);
-
-    // If tour already queued messages before we finished initializing, run them now
-    if (localStorage.getItem('agentlens_tour_queue')) {
-      runTourQueueRef.current?.(assistant.assistant_id, thread.thread_id);
-    }
   }, []);
 
   useEffect(() => { init(); }, [init]);
@@ -330,8 +282,6 @@ export function ChatPage() {
   }
 
   // ── Core send logic ─────────────────────────────────────────────────────
-  // Returns a promise that resolves only after LLM-judge scoring is done,
-  // so the tour can await the full sequence before sending the next message.
 
   async function sendMessage(text: string, aId: string, tId: string): Promise<void> {
     const humanId = crypto.randomUUID();
@@ -346,7 +296,6 @@ export function ChatPage() {
     ]);
     setInput('');
     setStreaming(true);
-    streamingRef.current = true;
 
     try {
       const result = await runAndWait(tId, aId, text);
@@ -384,9 +333,8 @@ export function ChatPage() {
         prev.map((m) => m.id === aiId ? { ...m, streaming: false } : m),
       );
       setStreaming(false);
-      streamingRef.current = false;
 
-      // LLM-as-judge - awaited so the tour sequence waits for scores before continuing
+      // LLM-as-judge scoring
       if (lsConfig?.apiKey && result.runId && openAiKey) {
         setMessages((prev) =>
           prev.map((m) => m.id === aiId ? { ...m, evalPending: true } : m),
@@ -433,11 +381,8 @@ export function ChatPage() {
       );
     } finally {
       setStreaming(false);
-      streamingRef.current = false;
     }
   }
-
-  // ── Manual send wrapper ──────────────────────────────────────────────────
 
   async function send() {
     const text = input.trim();
@@ -445,25 +390,11 @@ export function ChatPage() {
     await sendMessage(text, assistantId, threadId);
   }
 
-  // ── Tour: listen for start event (fires when ChatPage is already mounted) ─
-
-  useEffect(() => {
-    function onTourStart() {
-      if (assistantId && threadId) {
-        runTourQueue(assistantId, threadId);
-      }
-    }
-    window.addEventListener('tour:start-chat', onTourStart);
-    return () => window.removeEventListener('tour:start-chat', onTourStart);
-  }, [assistantId, threadId, runTourQueue]);
-
   // ── Auto-scroll ──────────────────────────────────────────────────────────
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  // ── Key handler ──────────────────────────────────────────────────────────
 
   function handleKey(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey) {
