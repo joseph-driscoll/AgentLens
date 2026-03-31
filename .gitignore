@@ -1,7 +1,10 @@
 node_modules
+dist
+
+# LangGraph agent
 langgraph-agent/node_modules
 langgraph-agent/new-langgraphjs-project-main
-dist
+langgraph-agent/.langgraph_api
 *.local
 .env
 .env.*
